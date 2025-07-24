@@ -3,6 +3,8 @@ from typing import Annotated
 from typer import Argument, Option
 
 from preling.app.app import app
+from preling.db import get_path
+from preling.utils.typer import typer_raise
 
 __all__ = [
     'delete',
@@ -25,4 +27,14 @@ def delete(
         ] = False,
 ) -> None:
     """Delete all stored data for `language`."""
-    print(f'Deleting data for language "{language}"/{force}...')
+    path = get_path(language)
+    if not path.exists():
+        typer_raise(f'Language "{language}" is not initialized.')
+
+    if not force and not input(
+            f'Are you sure you want to delete all data for "{language}"? (y/N): ',
+    ).lower().startswith('y'):
+        typer_raise('Operation canceled.')
+
+    path.unlink(missing_ok=True)
+    print(f'Deleted all data for "{language}".')
