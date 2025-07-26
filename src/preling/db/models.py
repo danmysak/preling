@@ -45,10 +45,9 @@ class Word(Base):
         passive_deletes=True,
     )
 
-    __table_args__ = (
-        Index('ix_words_id_due_null', 'id', sqlite_where=lambda: lambda: Word.due.is_(None)),
-        Index('ix_words_due_id_due_not_null', 'due', 'id', sqlite_where=lambda: Word.due.is_not(None)),
-    )
+
+Index('ix_words_id_due_null', Word.id, sqlite_where=Word.due.is_(None)),
+Index('ix_words_due_id_due_not_null', Word.due, Word.id, sqlite_where=Word.due.is_not(None)),
 
 
 class SentenceWord(Base):
