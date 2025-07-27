@@ -46,31 +46,24 @@ class Word(Base):
     )
 
 
-Index('ix_words_id_due_null', Word.id, sqlite_where=Word.due.is_(None)),
-Index('ix_words_due_id_due_not_null', Word.due, Word.id, sqlite_where=Word.due.is_not(None)),
+Index('ix_words_id_due_null', Word.id, sqlite_where=Word.due.is_(None))
+Index('ix_words_due_id_due_not_null', Word.due, Word.id, sqlite_where=Word.due.is_not(None))
 
 
 class SentenceWord(Base):
     __tablename__ = 'sentence_word_index'
 
     sentence_id: Mapped[int] = mapped_column(
-        ForeignKey(
-            Sentence.id,
-            ondelete='CASCADE',
-            onupdate='CASCADE',
-        ),
+        ForeignKey(Sentence.id, ondelete='CASCADE', onupdate='CASCADE'),
         primary_key=True,
     )
     word_id: Mapped[int] = mapped_column(
-        ForeignKey(
-            Word.id,
-            ondelete='CASCADE',
-            onupdate='CASCADE',
-        ),
+        ForeignKey(Word.id, ondelete='CASCADE', onupdate='CASCADE'),
         primary_key=True,
     )
-    random_key: Mapped[int] = mapped_column(server_default=text("(abs(random()))"))
+    random_key: Mapped[int] = mapped_column(server_default=text('(abs(random()) % 16384)'))
 
     __table_args__ = (
         Index('ix_sentence_word_index_word_id_random_key', 'word_id', 'random_key'),
+        {'sqlite_with_rowid': False},
     )
