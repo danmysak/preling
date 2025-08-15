@@ -1,7 +1,7 @@
 from __future__ import annotations
 from collections import Counter
 from pathlib import Path
-from typing import Annotated, cast, Generator, TYPE_CHECKING
+from typing import Annotated, Generator, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from spacy.language import Language
@@ -10,7 +10,7 @@ from typer import Argument
 
 from preling.app.app import app
 from preling.db import get_session, Session
-from preling.db.models import Sentence, Word
+from preling.db.models import Sentence, SentenceWord, Word
 from preling.utils.typer import typer_raise
 
 __all__ = [
@@ -40,16 +40,16 @@ def extract_words(nlp: Language, sentence: str) -> list[str]:
     return [token.lower_ for token in nlp(sentence) if token.is_alpha]
 
 
-def process_corpus(language: str, corpus: Path) -> tuple[dict[str, set[str]], Counter[str]]:
+def process_corpus(language: str, corpus: Path) -> tuple[dict[str, list[str]], Counter[str]]:
     """Process the corpus and return words by sentence and word frequencies."""
     nlp = get_nlp(language)
 
-    words_by_sentence: dict[str, set[str]] = {}
+    words_by_sentence: dict[str, list[str]] = {}
     word_frequencies: Counter[str] = Counter()
 
     for sentence in tqdm(get_sentences(corpus), desc=f'Processing sentences'):
         if sentence not in words_by_sentence and (words := extract_words(nlp, sentence)):
-            words_by_sentence[sentence] = set(words)
+            words_by_sentence[sentence] = words
             word_frequencies.update(words)
 
     return words_by_sentence, word_frequencies
@@ -71,20 +71,23 @@ def add_words(session: Session, frequencies: Counter[str]) -> dict[str, int]:
     return ids_by_word
 
 
-def get_words(session: Session, ids: set[int]) -> list[Word]:
-    """Retrieve words from the database by their IDs."""
-    return cast(list[Word], session.query(Word).filter(Word.id.in_(ids)).all())
-
-
-def add_sentences(session: Session, words_by_sentence: dict[str, set[str]], ids_by_word: dict[str, int]) -> None:
+def add_sentences(session: Session, words_by_sentence: dict[str, list[str]], ids_by_word: dict[str, int]) -> None:
     """Add sentences to the database."""
     for sentence_text, words in tqdm(words_by_sentence.items(), desc='Adding sentences'):
-        session.add(Sentence(
+        sentence_obj = Sentence(
             sentence=sentence_text,
             correct_attempts=0,
             incorrect_attempts=0,
-            words=get_words(session, set(ids_by_word[word] for word in words))
-        ))
+        )
+        session.add(sentence_obj)
+        session.flush()
+        for word_index, word in enumerate(words):
+            session.add(SentenceWord(
+                sentence_id=sentence_obj.id,
+                word_index=word_index,
+                word_id=ids_by_word[word],
+            ))
+        session.flush()
 
 
 @app.command()
@@ -106,9 +109,11 @@ def init(
 ) -> None:
     """Initialise PreLing for a new language."""
     with get_session(language) as session:
-        if session.query(Sentence).count() > 0:
+        if session.query(Sentence).first():
             typer_raise(f'PreLing is already initialized for language "{language}".')
         words_by_sentence, word_frequencies = process_corpus(language, corpus)
+        if not word_frequencies:
+            typer_raise(f'No valid sentences found in the corpus.')
         ids_by_word = add_words(session, word_frequencies)
         add_sentences(session, words_by_sentence, ids_by_word)
         print('Committing changes to the database...')
