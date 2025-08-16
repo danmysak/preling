@@ -43,7 +43,13 @@ def build_options(extra_options: list[ExtraOption]) -> tuple[list[list[Text]], d
     return prompt, mapping
 
 
-def ask(console: Console, prompt: Text, extra_options: list[ExtraOption]) -> str:
+def ask(
+        console: Console,
+        prompt: Text,
+        extra_options: list[ExtraOption],
+        *,
+        on_before_input: Callable[[], None] | None = None,
+) -> str:
     """Prompt the user for input or to choose one of the extra options."""
     options_prompt, options_mapping = build_options(extra_options)
     console.print(prompt, end='')
@@ -54,6 +60,8 @@ def ask(console: Console, prompt: Text, extra_options: list[ExtraOption]) -> str
     for option in extra_options:
         if option.perform_immediately:
             option.action()
+    if on_before_input:
+        on_before_input()
     while True:
         response = PromptSession().prompt()
         if option := options_mapping.get(normalize_key(response)):

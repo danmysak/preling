@@ -160,9 +160,17 @@ def study(
         ] = False,
 ) -> None:
     """Launch an interactive study session."""
-    while True:
-        with get_session(language) as session:
+    with get_session(language) as session:
+        target_word: Word
+        sentence: Sentence
+
+        def update_next() -> None:
+            nonlocal target_word, sentence
             target_word, sentence = choose_next(session)
+
+        update_next()
+
+        while True:
             if new_words := find_new_words(sentence):
                 print_new_words(new_words, target_word.id)
             options = build_options(
@@ -188,6 +196,6 @@ def study(
             clear_previous()
             print_evaluation(translation, evaluation)
             update(sentence, evaluation, session)
-            ask(CONSOLE, ENTER_TO_CONTINUE, [QUIT_OPTION])
+            ask(CONSOLE, ENTER_TO_CONTINUE, [QUIT_OPTION], on_before_input=update_next)
             clear_previous(2)
             CONSOLE.print(SECTION_DELIMITER)
