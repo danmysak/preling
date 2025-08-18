@@ -37,7 +37,7 @@ def get_sentences(corpus: Path) -> Generator[str, None, None]:
 
 def extract_words(nlp: Language, sentence: str) -> list[str]:
     """Extract words from a sentence using spaCy."""
-    return [token.lower_ for token in nlp(sentence) if token.is_alpha]
+    return [token.lower_ for token in nlp(sentence) if any(c.isalpha() for c in token.text)]
 
 
 def process_corpus(language: str, corpus: Path) -> tuple[dict[str, list[str]], Counter[str]]:
