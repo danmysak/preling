@@ -37,7 +37,7 @@ BACK_TRANSLATION_DELIMITER = ' ~ '
 CORRECT_MARK = '✅'
 INCORRECT_MARK = '❌'
 UNCLEAR_MARK = '❓'
-NEUTRAL_MARK = '-'
+LLM_MARK = '🔹'
 
 CONSOLE = Console(highlight=False)
 
@@ -93,7 +93,7 @@ def print_evaluation(translation: str, evaluation: SentenceEvaluation) -> None:
             end='',
         )
     CONSOLE.print()
-    CONSOLE.print(' '.join([LLMS, NEUTRAL_MARK, evaluation.llm_translation]))
+    CONSOLE.print(' '.join([LLMS, LLM_MARK, evaluation.llm_translation]))
     CONSOLE.print(SECTION_DELIMITER)
     for e in evaluation.words:
         CONSOLE.print(
