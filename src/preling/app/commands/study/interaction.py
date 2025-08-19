@@ -19,7 +19,6 @@ OPTION_DELIMITER = ' | '
 class ExtraOption:
     title: str
     action: Callable[[], None]
-    perform_immediately: bool = False
 
 
 def normalize_key(text: str) -> str:
@@ -57,9 +56,6 @@ def ask(
         console.print(Text(OPTION_DELIMITER, style='dim'), end='')
         console.print(*option_prompt, sep='', end='')
     console.print()
-    for option in extra_options:
-        if option.perform_immediately:
-            option.action()
     if on_before_input:
         on_before_input()
     while True:

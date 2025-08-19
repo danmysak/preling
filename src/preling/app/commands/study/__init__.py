@@ -1,6 +1,9 @@
+from functools import partial
 from typing import Annotated
 
 from rich.console import Console
+from rich.live import Live
+from rich.markdown import Markdown
 from rich.text import Text
 from typer import Argument, Option
 
@@ -10,6 +13,7 @@ from preling.db.models import Sentence, Word
 from preling.utils.console import clear_previous
 from .chooser import choose_next
 from .evaluator import evaluate, SentenceEvaluation, WordEvaluation
+from .explainer import explain
 from .interaction import ask, ExtraOption
 from .tts import read
 from .updater import update_sentence, update_word
@@ -26,6 +30,7 @@ NEW_WORDS_PLURAL = 'New words:'
 AUDIO_ONLY_PROMPT = Text('(...)')
 
 REPEAT_TITLE = 'Repeat'
+EXPLAIN_TITLE = 'Explain'
 QUIT_TITLE = 'Quit'
 
 EVALUATION_IN_PROGRESS = Text('Evaluating translation...', style='dim')
@@ -41,10 +46,7 @@ LLM_MARK = '🔹'
 
 CONSOLE = Console(highlight=False)
 
-QUIT_OPTION = ExtraOption(
-    title=QUIT_TITLE,
-    action=lambda: exit(0),
-)
+QUIT_OPTION = [ExtraOption(QUIT_TITLE, lambda: exit(0))]
 
 
 def find_new_words(sentence: Sentence) -> dict[int, Word]:
@@ -61,25 +63,6 @@ def print_new_words(words: dict[int, Word], target_word_id: int) -> None:
             + Text(word.word.upper(), style='bold'),
         )
     CONSOLE.print(SECTION_DELIMITER)
-
-
-def build_options(
-        sentence: Sentence,
-        language: str,
-        include_audio: bool,
-        tts_model: str,
-        api_key: str,
-) -> list[ExtraOption]:
-    """Build a list of action options for the user to choose from during the study session."""
-    options: list[ExtraOption] = []
-    if include_audio:
-        options.append(ExtraOption(
-            title=REPEAT_TITLE,
-            action=lambda: read(sentence.sentence, language, tts_model, api_key),
-            perform_immediately=True,
-        ))
-    options.append(QUIT_OPTION)
-    return options
 
 
 def print_evaluation(translation: str, evaluation: SentenceEvaluation) -> None:
@@ -110,6 +93,24 @@ def update(sentence: Sentence, evaluation: SentenceEvaluation, session: Session)
         if e.is_correct is not None:
             update_word(e.word_data, e.is_correct)
     session.commit()
+
+
+def build_explanation_option(sentence: Sentence, language: str, model: str, api_key: str) -> list[ExtraOption]:
+    """Build an option to explain the sentence using the LLM."""
+    def do_explain():
+        chunks: list[str] = []
+        with CONSOLE.screen():
+            CONSOLE.print(sentence.sentence, style='bold red')
+            CONSOLE.print()
+            with Live(console=CONSOLE) as live:
+                for chunk in explain(sentence, language, model, api_key):
+                    chunks.append(chunk)
+                    live.update(Markdown(''.join(chunks)))
+            CONSOLE.print()
+            CONSOLE.print(ENTER_TO_CONTINUE)
+            input()
+
+    return [ExtraOption(EXPLAIN_TITLE, do_explain)]
 
 
 @app.command()
@@ -173,29 +174,30 @@ def study(
         while True:
             if new_words := find_new_words(sentence):
                 print_new_words(new_words, target_word.id)
-            options = build_options(
-                sentence=sentence,
-                language=language,
-                include_audio=audio or audio_only,
-                tts_model=tts_model,
-                api_key=api_key,
-            )
             formatted_sentence = Text(sentence.sentence, style='bold')
-            translation = ask(CONSOLE, formatted_sentence if not audio_only else AUDIO_ONLY_PROMPT, options)
+
+            do_read = partial(read, sentence.sentence, language, tts_model, api_key) if audio or audio_only else None
+            repeat_option = [ExtraOption(REPEAT_TITLE, do_read)] if do_read else []
+
+            translation = ask(
+                CONSOLE,
+                formatted_sentence if not audio_only else AUDIO_ONLY_PROMPT,
+                repeat_option + QUIT_OPTION,
+                on_before_input=do_read,
+            )
             clear_previous(2)
             CONSOLE.print(formatted_sentence)
             CONSOLE.print(translation)
             CONSOLE.print(EVALUATION_IN_PROGRESS)
-            evaluation = evaluate(
-                sentence=sentence,
-                language=language,
-                translation=translation,
-                model=model,
-                api_key=api_key,
-            )
+            evaluation = evaluate(sentence, language, translation, model, api_key)
             clear_previous()
             print_evaluation(translation, evaluation)
             update(sentence, evaluation, session)
-            ask(CONSOLE, ENTER_TO_CONTINUE, [QUIT_OPTION], on_before_input=update_next)
+            ask(
+                CONSOLE,
+                ENTER_TO_CONTINUE,
+                repeat_option + build_explanation_option(sentence, language, model, api_key) + QUIT_OPTION,
+                on_before_input=update_next,
+            )
             clear_previous(2)
             CONSOLE.print(SECTION_DELIMITER)
