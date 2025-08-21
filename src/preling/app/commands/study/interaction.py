@@ -5,7 +5,7 @@ from prompt_toolkit import PromptSession
 from rich.console import Console
 from rich.text import Text
 
-from preling.utils.console import clear_previous
+from preling.utils.console import clear_current_line, clear_previous
 
 __all__ = [
     'ask',
@@ -58,6 +58,7 @@ def ask(
     console.print()
     if on_before_input:
         on_before_input()
+        clear_current_line()  # Otherwise the input made during the operation will get displayed twice
     while True:
         response = PromptSession().prompt()
         if option := options_mapping.get(normalize_key(response)):
