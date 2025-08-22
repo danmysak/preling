@@ -37,6 +37,7 @@ class WordOutput(BaseModel):
     lowercased_word: str
     word: str
     llm_translation: str
+    learner_translation: str | None
     correctly_translated: bool | None
 
 
@@ -60,24 +61,24 @@ def generate_prompt(language: str, sentence: Sentence, translation: str) -> str:
         f"A learner of the language with code `{language}` has attempted to translate "
         f"the following sentence from this language into English:",
         f"`{sentence.sentence}`",
-        "Their translation is:",
+        f"Their translation is:",
         f"`{translation}`",
-        "Determine whether the learner's translation is correct. Also, provide your own "
-        "translation that you consider perfect. It may match the learner's version, or differ, "
-        "even if you deem the learner's attempt correct but see room for minor improvements. "
-        "If the learner's translation is incorrect, provide a back-translation of it into "
-        "the original language.",
-        "Additionally, here is the list of words in the sentence, in order (lowercased):",
+        f"Determine whether the learner's translation is correct. Also, provide your own "
+        f"translation that you consider perfect. It may match the learner's version, or differ, "
+        f"even if you deem the learner's attempt correct but see room for minor improvements. "
+        f"If the learner's translation is incorrect, provide a back-translation of it into "
+        f"the original language.",
+        f"Additionally, here is the list of words in the sentence, in order (lowercased):",
         *[
             f"{word_number}) {word.word.lower()}"
             for word_number, word in enumerate(sentence.words, start=1)
         ],
-        "For each word, provide the following information:",
-        "- Your own translation of the word into English within the context of the sentence.",
-        "- Whether the learner's translation of the word is correct—that is, whether all "
-        "information conveyed by the word (lexical and/or grammatical) is present in the learner's "
-        "translation. You may return null if it's unclear from the learner's translation whether "
-        "they understood the word correctly.",
+        f"For each word, provide the following information:",
+        f"- Your own translation of the word into English within the context of the sentence.",
+        f"- Whether the learner's translation of the word is correct—that is, whether all "
+        f"information conveyed by the word (lexical and/or grammatical) is present in the learner's "
+        f"translation. You may return null if it's unclear from the learner's translation whether "
+        f"they understood the word correctly.",
     ])
 
 
