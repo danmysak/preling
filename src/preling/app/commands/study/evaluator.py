@@ -92,7 +92,8 @@ def build_evaluation(sentence_analysis: SentenceOutput, sentence: Sentence) -> S
             WordEvaluation(
                 word=word.word,
                 word_data=sentence.words[word.word_number - 1],
-                is_correct=word.correctly_translated,
+                is_correct=(sentence_analysis.correctly_translated or  # since sometimes LLM makes mistakes;
+                            word.correctly_translated),                # the order is important because of nullability
                 llm_translation=word.llm_translation,
             )
             for word in sentence_analysis.words
