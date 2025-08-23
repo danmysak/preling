@@ -80,7 +80,3 @@ class EvaluationCache(Base):
     model: Mapped[str] = mapped_column(primary_key=True)
     translation: Mapped[str] = mapped_column(primary_key=True)
     evaluation: Mapped[str]
-
-    __table_args__ = (
-        {'sqlite_with_rowid': False},
-    )
