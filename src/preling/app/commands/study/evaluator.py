@@ -82,18 +82,18 @@ def generate_prompt(language: str, sentence: Sentence, translation: str) -> str:
     ])
 
 
-def build_evaluation(sentence_analysis: SentenceOutput, sentence: Sentence) -> SentenceEvaluation:
+def build_evaluation(sentence_analysis: SentenceOutput, sentence: Sentence, translation: str) -> SentenceEvaluation:
     """Build a `SentenceEvaluation` from the LLM's analysis of the sentence and its words."""
+    is_correct = sentence_analysis.correctly_translated or sentence_analysis.llm_translation == translation
     return SentenceEvaluation(
-        is_correct=sentence_analysis.correctly_translated,
+        is_correct=is_correct,
         llm_translation=sentence_analysis.llm_translation,
         back_translation=sentence_analysis.back_translation,
         words=[
             WordEvaluation(
                 word=word.word,
                 word_data=sentence.words[word.word_number - 1],
-                is_correct=(sentence_analysis.correctly_translated or  # since sometimes LLM makes mistakes;
-                            word.correctly_translated),                # the order is important because of nullability
+                is_correct=is_correct or word.correctly_translated,  # the order is important due to nullability
                 llm_translation=word.llm_translation,
             )
             for word in sentence_analysis.words
@@ -136,4 +136,4 @@ def cached_request(sentence: Sentence, language: str, translation: str, model: s
 
 def evaluate(sentence: Sentence, language: str, translation: str, model: str, api_key: str) -> SentenceEvaluation:
     """Evaluate the translation of a sentence from the specified language into English using an LLM."""
-    return build_evaluation(cached_request(sentence, language, translation, model, api_key), sentence)
+    return build_evaluation(cached_request(sentence, language, translation, model, api_key), sentence, translation)
