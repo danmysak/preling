@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 from preling.db import get_session
 from preling.db.models import EvaluationCache, Sentence, Word
+from preling.utils.strings import normalize
 
 __all__ = [
     'evaluate',
@@ -84,7 +85,9 @@ def generate_prompt(language: str, sentence: Sentence, translation: str) -> str:
 
 def build_evaluation(sentence_analysis: SentenceOutput, sentence: Sentence, translation: str) -> SentenceEvaluation:
     """Build a `SentenceEvaluation` from the LLM's analysis of the sentence and its words."""
-    is_correct = sentence_analysis.correctly_translated or sentence_analysis.llm_translation == translation
+    is_correct = (sentence_analysis.correctly_translated
+                  or normalize(sentence_analysis.llm_translation) == normalize(translation)
+                  or normalize(sentence_analysis.back_translation or '') == normalize(sentence.sentence))
     return SentenceEvaluation(
         is_correct=is_correct,
         llm_translation=sentence_analysis.llm_translation,

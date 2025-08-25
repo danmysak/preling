@@ -162,16 +162,19 @@ def study(
 ) -> None:
     """Launch an interactive study session."""
     with get_session(language) as session:
-        target_word: Word
         sentence: Sentence
+        target_word: Word
+        due_count: int
 
         def update_next() -> None:
-            nonlocal target_word, sentence
-            target_word, sentence = choose_next(session)
+            nonlocal target_word, sentence, due_count
+            sentence, target_word, due_count = choose_next(session)
 
         update_next()
 
         while True:
+            if due_count > 0:
+                CONSOLE.print(Text(f'Words to review: ', style='yellow') + Text(str(due_count), style='bold'))
             if new_words := find_new_words(sentence):
                 print_new_words(new_words, target_word.id)
             formatted_sentence = Text(sentence.sentence, style='bold')

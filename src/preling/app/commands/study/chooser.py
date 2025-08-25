@@ -15,26 +15,27 @@ __all__ = [
 MAX_CANDIDATE_SENTENCES = 1000  # Maximum number of rows to scan when choosing a sentence
 
 
-def choose_next_word(session: Session) -> Word:
+def choose_next_word(session: Session) -> tuple[Word, int]:
     """
-    Return the next word to learn or review, using the following priority:
+    Return the next word to learn or review and the total words to review, using the following priority:
     1. The word with the earliest `due` timestamp that is already due.
     2. If no such word exists, the most frequent unlearned word (i.e., the one with the smallest `id` and `due`==None).
     3. If no unlearned words remain, the word with the earliest future `due`.
     """
-    if next_due_word := session.query(Word).filter(
+    due_words = session.query(Word).filter(
         Word.due.is_not(None),
         Word.due <= get_timestamp(),
-    ).order_by(Word.due).first():
-        return cast(Word, next_due_word)
+    )
+    if next_due_word := due_words.order_by(Word.due).first():
+        return cast(Word, next_due_word), due_words.count()
     if next_most_frequent_word := session.query(Word).filter(
         Word.due.is_(None),
     ).order_by(Word.id).first():
-        return cast(Word, next_most_frequent_word)
+        return cast(Word, next_most_frequent_word), 0
     if next_due_word := session.query(Word).filter(
         Word.due.is_not(None),
     ).order_by(Word.due).first():
-        return cast(Word, next_due_word)
+        return cast(Word, next_due_word), 0
     typer_raise('No words to learn or review found in the database.')
 
 
@@ -72,8 +73,8 @@ def choose_next_sentence(session: Session, word: Word) -> Sentence:
     )
 
 
-def choose_next(session: Session) -> tuple[Word, Sentence]:
-    """Pick the next word and sentence to learn or review."""
-    word = choose_next_word(session)
+def choose_next(session: Session) -> tuple[Sentence, Word, int]:
+    """Return the next sentence and word to learn or review along with the total words to review."""
+    word, due_count = choose_next_word(session)
     sentence = choose_next_sentence(session, word)
-    return word, sentence
+    return sentence, word, due_count
