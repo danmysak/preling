@@ -5,6 +5,7 @@ from typing import Annotated, Generator, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from spacy.language import Language
+from sqlalchemy import text
 from tqdm import tqdm
 from typer import Argument
 
@@ -118,6 +119,8 @@ def init(
         add_sentences(session, words_by_sentence, ids_by_word)
         print('Committing changes to the database...')
         session.commit()
+        print('Optimizing the database...')
+        session.execute(text('vacuum'))
     print(f'Initialized PreLing for language "{language}" '
           f'with {len(words_by_sentence)} unique sentences '
           f'and {len(word_frequencies)} unique words.')
