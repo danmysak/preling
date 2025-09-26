@@ -114,6 +114,7 @@ def request(sentence: Sentence, language: str, translation: str, model: str, api
         temperature=TEMPERATURE,
         text_format=SentenceOutput,
         input=generate_prompt(language, sentence, translation),
+        service_tier='priority',
     ).output_parsed
 
 
