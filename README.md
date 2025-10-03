@@ -8,6 +8,7 @@ Install [Python](https://www.python.org/downloads/) **3.12 or later** and [pipx]
 
 ```bash
 pipx install preling          # install
+pipx install "preling[ja]"    # alternatively: install with Japanese support
 pipx upgrade preling          # upgrade
 pipx uninstall preling        # uninstall (hopefully you won't need this)
 ```
