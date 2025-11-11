@@ -125,7 +125,7 @@ def cached_request(sentence: Sentence, language: str, translation: str, model: s
             EvaluationCache.sentence_id == sentence.id,
             EvaluationCache.model == model,
             EvaluationCache.translation == translation,
-        ).first():
+        ).limit(1).first():
             return SentenceOutput.model_validate_json(cached.evaluation)
         else:
             output = request(sentence, language, translation, model, api_key)

@@ -26,15 +26,15 @@ def choose_next_word(session: Session) -> tuple[Word, int]:
         Word.due.is_not(None),
         Word.due <= get_timestamp(),
     )
-    if next_due_word := due_words.order_by(Word.due).first():
+    if next_due_word := due_words.order_by(Word.due).limit(1).first():
         return cast(Word, next_due_word), due_words.count()
     if next_most_frequent_word := session.query(Word).filter(
         Word.due.is_(None),
-    ).order_by(Word.id).first():
+    ).order_by(Word.id).limit(1).first():
         return cast(Word, next_most_frequent_word), 0
     if next_due_word := session.query(Word).filter(
         Word.due.is_not(None),
-    ).order_by(Word.due).first():
+    ).order_by(Word.due).limit(1).first():
         return cast(Word, next_due_word), 0
     typer_raise('No words to learn or review found in the database.')
 

@@ -110,7 +110,7 @@ def init(
 ) -> None:
     """Initialise PreLing for a new language."""
     with get_session(language) as session:
-        if session.query(Sentence).first():
+        if session.query(Sentence).limit(1).first():
             typer_raise(f'PreLing is already initialized for language "{language}".')
         words_by_sentence, word_frequencies = process_corpus(language, corpus)
         if not word_frequencies:
