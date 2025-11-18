@@ -139,6 +139,14 @@ def study(
                 help='OpenAI API key.',
             ),
         ],
+        tts_api_key: Annotated[
+            str,
+            Option(
+                '--tts-api-key',
+                envvar='PRELING_TTS_API_KEY',
+                help='Either OpenAI or Gemini API key.',
+            ),
+        ],
         language: Annotated[
             str,
             Argument(
@@ -179,7 +187,8 @@ def study(
                 print_new_words(new_words, target_word.id)
             formatted_sentence = Text(sentence.sentence, style='bold')
 
-            do_read = partial(read, sentence.sentence, language, tts_model, api_key) if audio or audio_only else None
+            do_read = (partial(read, sentence.sentence, language, tts_model, tts_api_key)
+                       if audio or audio_only else None)
             repeat_option = [ExtraOption(REPEAT_TITLE, do_read)] if do_read else []
 
             translation = ask(

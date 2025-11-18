@@ -27,17 +27,18 @@ preling init <lang> <corpus>
 
 ```bash
 preling study <lang> [--audio] [--audio-only] [--model <GPT_MODEL>] \
-               [--tts-model <TTS_MODEL>] [--api-key <OPENAI_KEY>]
+               [--tts-model <TTS_MODEL>] [--api-key <OPENAI_KEY>] [--tts-api-key <OPENAI_OR_GEMINI_KEY>]
 ```
 
 * **`<lang>`** – the language code you initialized earlier.
 * **`--audio`** – play audio along with the text.  
 * **`--audio-only`** – play audio without displaying the text.  
 * **`--model`** – the GPT model to use for grammar evaluation.  
-* **`--tts-model`** – the text-to-speech model to use for audio playback.  
+* **`--tts-model`** – the text-to-speech model to use for audio playback.
 * **`--api-key`** – your OpenAI API key.
+* **`--tts-api-key`** – your OpenAI or Gemini API key for text-to-speech.
 
-Instead of passing these options each time, you can set the environment variables `PRELING_API_KEY`, `PRELING_MODEL`, and `PRELING_TTS_MODEL`.
+Instead of passing these options each time, you can set the environment variables `PRELING_API_KEY`, `PRELING_MODEL`, `PRELING_TTS_API_KEY`, and `PRELING_TTS_MODEL`.
 
 ## View Your Progress
 
