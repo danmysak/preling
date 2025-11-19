@@ -167,6 +167,12 @@ def study(
                 help='Play audio without displaying the text.',
             ),
         ] = False,
+        tts_locale: Annotated[
+            str | None,
+            Option(
+                help='Locale for TTS voice selection.',
+            ),
+        ] = None,
 ) -> None:
     """Launch an interactive study session."""
     with get_session(language) as session:
@@ -187,7 +193,7 @@ def study(
                 print_new_words(new_words, target_word.id)
             formatted_sentence = Text(sentence.sentence, style='bold')
 
-            do_read = (partial(read, sentence.sentence, language, tts_model, tts_api_key)
+            do_read = (partial(read, sentence.sentence, tts_locale, tts_model, tts_api_key)
                        if audio or audio_only else None)
             repeat_option = [ExtraOption(REPEAT_TITLE, do_read)] if do_read else []
 

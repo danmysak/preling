@@ -24,7 +24,7 @@ VOICES = [
 RESPONSE_FORMAT = 'pcm'
 
 
-def read(text: str, language: str, model: str, api_key: str) -> None:
+def read(text: str, locale: str | None, model: str, api_key: str) -> None:
     """Read the given text using OpenAI's TTS service."""
     async def do_read() -> None:
         async with AsyncOpenAI(api_key=api_key) as client:
@@ -32,7 +32,7 @@ def read(text: str, language: str, model: str, api_key: str) -> None:
                     model=model,
                     voice=choice(VOICES),
                     input=text,
-                    instructions=f'Language: {language}',
+                    instructions=f'Locale: {locale}' if locale else '',
                     response_format=RESPONSE_FORMAT,
             ) as response:
                 await LocalAudioPlayer().play(response)

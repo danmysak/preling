@@ -8,10 +8,10 @@ __all__ = [
 GEMINI_PREFIX = 'gemini'
 
 
-def read(text: str, language: str, model: str, api_key: str) -> None:
+def read(text: str, locale: str, model: str, api_key: str) -> None:
     """Read the given text using either OpenAI's or Gemini's TTS service."""
     (
         gemini_read
         if model.lower().startswith(GEMINI_PREFIX)
         else openai_read
-    )(text, language, model, api_key)
+    )(text, locale, model, api_key)

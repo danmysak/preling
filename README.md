@@ -1,6 +1,6 @@
 # PreLing
 
-PreLing is a command-line tool for improving language-comprehension skills through gradual exposure to new vocabulary. It supports every language that [SpaCy supports](https://spacy.io/usage/models#languages). Because PreLing uses GPT under the hood, you must have a paid [OpenAI account](https://platform.openai.com/) and an [API key](https://platform.openai.com/api-keys) to run it.
+PreLing is a command-line tool for improving language comprehension skills through gradual exposure to new vocabulary. It supports every language that [spaCy supports](https://spacy.io/usage/models#languages). Because PreLing uses GPT under the hood, you must have a paid [OpenAI account](https://platform.openai.com/) and an [API key](https://platform.openai.com/api-keys) to run it.
 
 ## Installation
 
@@ -27,16 +27,17 @@ preling init <lang> <corpus>
 
 ```bash
 preling study <lang> [--audio] [--audio-only] [--model <GPT_MODEL>] \
-               [--tts-model <TTS_MODEL>] [--api-key <OPENAI_KEY>] [--tts-api-key <OPENAI_OR_GEMINI_KEY>]
+               [--tts-model <TTS_MODEL>] [--api-key <OPENAI_KEY>] [--tts-api-key <OPENAI_OR_GCLOUD_KEY>]
 ```
 
 * **`<lang>`** – the language code you initialized earlier.
 * **`--audio`** – play audio along with the text.  
 * **`--audio-only`** – play audio without displaying the text.  
+* **`--tts-locale`** – the locale for text-to-speech (e.g., `en-US`, `ja-JP`); required for Gemini models.
 * **`--model`** – the GPT model to use for grammar evaluation.  
 * **`--tts-model`** – the text-to-speech model to use for audio playback.
 * **`--api-key`** – your OpenAI API key.
-* **`--tts-api-key`** – your OpenAI or Gemini API key for text-to-speech.
+* **`--tts-api-key`** – your OpenAI API key for text-to-speech, or path to Google Cloud service account JSON file for Gemini models.
 
 Instead of passing these options each time, you can set the environment variables `PRELING_API_KEY`, `PRELING_MODEL`, `PRELING_TTS_API_KEY`, and `PRELING_TTS_MODEL`.
 
@@ -49,6 +50,6 @@ preling stats <lang>
 ## Other Commands
 
 ```bash
-preling path <lang>               # show the path to the language-data file
-preling delete <lang> [--force]   # delete the language-data file; use --force to skip the confirmation prompt
+preling path <lang>               # show the path to the language data file
+preling delete <lang> [--force]   # delete the language data file; use --force to skip the confirmation prompt
 ```
