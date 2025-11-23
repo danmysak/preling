@@ -1,4 +1,5 @@
 from functools import partial
+import os
 from typing import Annotated
 
 from rich.console import Console
@@ -100,15 +101,13 @@ def build_explanation_option(sentence: Sentence, language: str, model: str, api_
     def do_explain():
         chunks: list[str] = []
         with CONSOLE.screen():
-            CONSOLE.print(sentence.sentence, style='bold red')
-            CONSOLE.print()
-            with Live(console=CONSOLE) as live:
+            with Live(console=CONSOLE, transient=True) as live:
                 for chunk in explain(sentence, language, model, api_key):
                     chunks.append(chunk)
                     live.update(Markdown(''.join(chunks)))
-            CONSOLE.print()
-            CONSOLE.print(ENTER_TO_CONTINUE)
-            input()
+        os.environ['LESS'] = '-R'  # Fix formatting in pager
+        with CONSOLE.pager(styles=True):
+            CONSOLE.print(Markdown(''.join(chunks)))
 
     return [ExtraOption(EXPLAIN_TITLE, do_explain)]
 
