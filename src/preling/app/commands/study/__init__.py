@@ -1,5 +1,6 @@
 from functools import partial
 import os
+import threading
 from typing import Annotated
 
 from rich.console import Console
@@ -35,6 +36,7 @@ EXPLAIN_TITLE = 'Explain'
 QUIT_TITLE = 'Quit'
 
 EVALUATION_IN_PROGRESS = Text('Evaluating translation...', style='dim')
+PREPARING_NEXT = Text('Preparing next sentence...', style='dim')
 ENTER_TO_CONTINUE = Text('Press Enter to continue...', style='dim')
 
 YOURS = 'Yours:'
@@ -185,7 +187,15 @@ def study(
 
         update_next()
 
+        bg_ready: threading.Event | None = None
+
         while True:
+            # Wait for background preparation if it hasn't finished yet
+            if bg_ready is not None and not bg_ready.is_set():
+                CONSOLE.print(PREPARING_NEXT)
+                bg_ready.wait()
+                clear_previous()
+
             if due_count > 0:
                 CONSOLE.print(Text(f'Words to review: ', style='yellow') + Text(str(due_count), style='bold'))
             if new_words := find_new_words(sentence):
@@ -196,11 +206,12 @@ def study(
                        if audio or audio_only else None)
             repeat_option = [ExtraOption(REPEAT_TITLE, do_read)] if do_read else []
 
+            if do_read:
+                do_read()
             translation = ask(
                 CONSOLE,
                 formatted_sentence if not audio_only else AUDIO_ONLY_PROMPT,
                 repeat_option + QUIT_OPTION,
-                on_before_input=do_read,
             )
             clear_previous(2)
             CONSOLE.print(formatted_sentence)
@@ -210,11 +221,19 @@ def study(
             clear_previous()
             print_evaluation(translation, evaluation)
             update(sentence, evaluation, session)
+
+            # Start background preparation, then show continue prompt
+            event = threading.Event()
+            bg_ready = event
+            threading.Thread(
+                target=lambda e=event: (update_next(), e.set()),
+                daemon=True,
+            ).start()
+
             ask(
                 CONSOLE,
                 ENTER_TO_CONTINUE,
                 repeat_option + build_explanation_option(sentence, language, model, api_key) + QUIT_OPTION,
-                on_before_input=update_next,
             )
             clear_previous(2)
             CONSOLE.print(SECTION_DELIMITER)

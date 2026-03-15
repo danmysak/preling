@@ -5,7 +5,7 @@ from prompt_toolkit import PromptSession
 from rich.console import Console
 from rich.text import Text
 
-from preling.utils.console import clear_current_line, clear_previous
+from preling.utils.console import clear_previous
 
 __all__ = [
     'ask',
@@ -46,8 +46,6 @@ def ask(
         console: Console,
         prompt: Text,
         extra_options: list[ExtraOption],
-        *,
-        on_before_input: Callable[[], None] | None = None,
 ) -> str:
     """Prompt the user for input or to choose one of the extra options."""
     options_prompt, options_mapping = build_options(extra_options)
@@ -56,9 +54,6 @@ def ask(
         console.print(Text(OPTION_DELIMITER, style='dim'), end='')
         console.print(*option_prompt, sep='', end='')
     console.print()
-    if on_before_input:
-        on_before_input()
-        clear_current_line()  # Otherwise the input made during the operation will get displayed twice
     while True:
         response = PromptSession().prompt()
         if option := options_mapping.get(normalize_key(response)):
